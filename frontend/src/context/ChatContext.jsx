@@ -162,6 +162,35 @@ export const ChatProvider = ({ children }) => {
     // Si es texto, validar que no esté vacío
     if (type === 'text' && !content.trim()) return;
 
+    // 1. Optimistic UI: Crear mensaje temporal
+    const tempId = `temp-${Date.now()}`;
+    const tempMessage = {
+      id: tempId,
+      conversation_id: activeConversation.id,
+      sender_id: user.id,
+      sender_username: user.username,
+      content: type === 'text' ? content : (file ? URL.createObjectURL(file) : content), // Usar blob URL para previsualización
+      type: type,
+      created_at: new Date().toISOString(),
+      status: 'sending' // Estado temporal
+    };
+
+    // Agregar mensaje inmediatamente a la UI
+    setMessages((prev) => [...prev, tempMessage]);
+
+    // Actualizar lista de conversaciones (optimista)
+    setConversations(prev => prev.map(c => {
+      if (c.id === activeConversation.id) {
+        return {
+          ...c,
+          last_message: type === 'text' ? content : (type === 'image' ? '📷 Foto' : '📎 Archivo'),
+          last_message_time: new Date().toISOString(),
+          unread_count: 0
+        };
+      }
+      return c;
+    }).sort((a, b) => new Date(b.last_message_time || b.updated_at) - new Date(a.last_message_time || a.updated_at)));
+
     try {
       let payload;
       
@@ -178,29 +207,24 @@ export const ChatProvider = ({ children }) => {
         };
       }
 
+      // 2. Enviar al servidor
       const response = await messageAPI.send(payload);
-
       const newMessage = response.data.data;
       
-      // Agregar mensaje localmente (aparecerá inmediatamente)
-      setMessages((prev) => [...prev, newMessage]);
-
-      // Actualizar última vez en la lista de conversaciones
-      setConversations(prev => prev.map(c => {
-        if (c.id === activeConversation.id) {
-          return {
-            ...c,
-            last_message: newMessage.type === 'text' ? newMessage.content : (newMessage.type === 'image' ? '📷 Foto' : '📎 Archivo'),
-            last_message_time: newMessage.created_at,
-            unread_count: 0
-          };
-        }
-        return c;
-      }).sort((a, b) => new Date(b.last_message_time) - new Date(a.last_message_time)));
+      // 3. Reemplazar mensaje temporal con el real
+      setMessages((prev) => prev.map(msg => 
+        msg.id === tempId ? newMessage : msg
+      ));
 
       return { success: true };
     } catch (error) {
       console.error('Error al enviar mensaje:', error);
+      
+      // 4. Manejo de errores: Marcar mensaje como error
+      setMessages((prev) => prev.map(msg => 
+        msg.id === tempId ? { ...msg, status: 'error' } : msg
+      ));
+
       return { success: false, error: error.response?.data?.message };
     }
   };
@@ -226,6 +250,56 @@ export const ChatProvider = ({ children }) => {
     setMessages([]);
   };
 
+  /**
+   * Eliminar mensaje
+   */
+  const deleteMessage = async (messageId) => {
+    try {
+      await messageAPI.delete(messageId);
+      
+      // Eliminación optimista
+      setMessages(prev => prev.filter(m => m.id !== messageId));
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error al eliminar mensaje:', error);
+      return { success: false, error: error.response?.data?.message };
+    }
+  };
+
+  // Efecto para escuchar eventos de borrado
+  useEffect(() => {
+    if (!activeConversation) return;
+
+    // Ya estamos suscritos vía el efecto global, pero necesitamos bindear el evento específico
+    // SIN EMBARGO, el efecto global recrea las suscripciones cuando cambia 'conversations'.
+    // Para simplificar y no tocar 'pusher.js' ni el efecto gigante, 
+    // vamos a crear una suscripción paralela SOLO para el chat activo para eventos extra.
+    
+    // Importamos 'pusher' instance desde el servicio si fuese necesario, 
+    // pero mejor usamos subscribeToConversation de nuevo (Pusher maneja canales singleton, no hay problema)
+    // O mejor aún, modificamos el efecto global para que devuelva el channel y podamos usarlo?
+    // No, el efecto global es complejo.
+    
+    // Estrategia simple: Usar subscribeToConversation para obtener el channel del chat activo
+    // y bindear 'message-deleted'. (Pusher JS deduplica suscripciones al mismo canal)
+    
+    const channel = subscribeToConversation(activeConversation.id, () => {});
+    
+    const handleDelete = (data) => {
+      if (data.conversation_id === activeConversation.id) {
+        setMessages(prev => prev.filter(m => m.id !== data.id));
+      }
+    };
+
+    channel.bind('message-deleted', handleDelete);
+
+    return () => {
+      channel.unbind('message-deleted', handleDelete);
+      // No desuscribimos del canal completo porque el efecto global lo necesita
+    };
+  }, [activeConversation]);
+
   const value = {
     conversations,
     activeConversation,
@@ -235,6 +309,7 @@ export const ChatProvider = ({ children }) => {
     selectConversation,
     createConversation,
     sendMessage,
+    deleteMessage,
     searchUsers,
     closeConversation
   };

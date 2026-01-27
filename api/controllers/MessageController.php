@@ -214,12 +214,30 @@ class MessageController {
 
         $messageId = (int) $messageId;
 
+        // Obtener el mensaje antes de borrarlo para tener el conversation_id
+        $message = $this->messageModel->findById($messageId);
+
+        if (!$message) {
+            Response::error('Mensaje no encontrado', 404);
+        }
+
         // Eliminar mensaje (solo si el usuario es el autor)
         $success = $this->messageModel->delete($messageId, $userId);
 
         if (!$success) {
             Response::error('No se pudo eliminar el mensaje o no tienes permiso', 403);
         }
+
+        // Disparar evento a Pusher
+        $channelName = "conversation-{$message['conversation_id']}";
+        $eventName = "message-deleted";
+        
+        $eventData = [
+            'id' => $messageId,
+            'conversation_id' => $message['conversation_id']
+        ];
+
+        $this->pusher->trigger($channelName, $eventName, $eventData);
 
         Response::success(null, 'Mensaje eliminado exitosamente');
     }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useChat } from '../../context/ChatContext';
 import MessageBubble from './MessageBubble';
@@ -7,21 +7,35 @@ import AttachmentMenu from './AttachmentMenu';
 
 const ChatWindow = ({ conversation, onBackToList }) => {
   const { user } = useAuth();
-  const { messages, sendMessage } = useChat();
+  const { messages, sendMessage, deleteMessage } = useChat();
   const [messageText, setMessageText] = useState('');
   const [sending, setSending] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
+  // Search state
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  
   const messagesEndRef = useRef(null);
   const emojiPickerRef = useRef(null);
   const emojiButtonRef = useRef(null);
   const attachMenuRef = useRef(null);
   const attachButtonRef = useRef(null);
   const fileInputRef = useRef(null);
+  const searchInputRef = useRef(null);
 
-  // Scroll automático al último mensaje
+  // Focus search input when opening search
+  useEffect(() => {
+    if (isSearching && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [isSearching]);
+
+  // Scroll automático al último mensaje (solo si no estamos buscando para no saltar)
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (!isSearching) {
+       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   useEffect(() => {
@@ -74,6 +88,12 @@ const ChatWindow = ({ conversation, onBackToList }) => {
     }
     
     setSending(false);
+  };
+
+  const handleDeleteMessage = async (messageId) => {
+    if (window.confirm('¿Estás seguro de que quieres eliminar este mensaje para todos?')) {
+       await deleteMessage(messageId);
+    }
   };
 
   // Handle file selection
@@ -143,6 +163,19 @@ const ChatWindow = ({ conversation, onBackToList }) => {
   const contactName = contact?.username || conversation.name || 'Grupo';
   const isOnline = contact?.status === 'online';
 
+  // Calculate search matches
+  const searchMatchCount = useMemo(() => {
+    if (!searchQuery.trim()) return 0;
+    const query = searchQuery.toLowerCase();
+    return messages.reduce((count, msg) => {
+      if (msg.type === 'text' && msg.content) {
+        const matches = msg.content.toLowerCase().match(new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'));
+        return count + (matches ? matches.length : 0);
+      }
+      return count;
+    }, 0);
+  }, [messages, searchQuery]);
+
   return (
     <div className="chat-window">
       {/* Header del chat */}
@@ -176,16 +209,42 @@ const ChatWindow = ({ conversation, onBackToList }) => {
         </div>
 
         <div className="chat-header-actions">
-          <button className="icon-button">
-            <svg viewBox="0 0 24 24" width="24" height="24">
-              <path fill="currentColor" d="M15.9 14.3H15l-.3-.3c1-1.1 1.6-2.7 1.6-4.3 0-3.7-3-6.7-6.7-6.7S3 6 3 9.7s3 6.7 6.7 6.7c1.6 0 3.2-.6 4.3-1.6l.3.3v.8l5.1 5.1 1.5-1.5-5-5.2zm-6.2 0c-2.6 0-4.6-2.1-4.6-4.6s2.1-4.6 4.6-4.6 4.6 2.1 4.6 4.6-2 4.6-4.6 4.6z"></path>
-            </svg>
-          </button>
-          <button className="icon-button">
-            <svg viewBox="0 0 24 24" width="24" height="24">
-              <path fill="currentColor" d="M12 7a2 2 0 1 0-.001-4.001A2 2 0 0 0 12 7zm0 2a2 2 0 1 0-.001 3.999A2 2 0 0 0 12 9zm0 6a2 2 0 1 0-.001 3.999A2 2 0 0 0 12 15z"></path>
-            </svg>
-          </button>
+           {isSearching ? (
+             <div className="search-bar-container">
+               <button className="icon-button" onClick={() => {
+                 setIsSearching(false);
+                 setSearchQuery('');
+               }}>
+                 <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"></path></svg>
+               </button>
+               <input 
+                 ref={searchInputRef}
+                 type="text" 
+                 placeholder="Buscar..." 
+                 value={searchQuery}
+                 onChange={(e) => setSearchQuery(e.target.value)}
+                 className="search-input"
+               />
+               {searchQuery && (
+                  <span className="search-count">
+                    {searchMatchCount} {searchMatchCount === 1 ? 'coincidencia' : 'coincidencias'}
+                  </span>
+               )}
+             </div>
+           ) : (
+             <>
+               <button className="icon-button" onClick={() => setIsSearching(true)}>
+                 <svg viewBox="0 0 24 24" width="24" height="24">
+                   <path fill="currentColor" d="M15.9 14.3H15l-.3-.3c1-1.1 1.6-2.7 1.6-4.3 0-3.7-3-6.7-6.7-6.7S3 6 3 9.7s3 6.7 6.7 6.7c1.6 0 3.2-.6 4.3-1.6l.3.3v.8l5.1 5.1 1.5-1.5-5-5.2zm-6.2 0c-2.6 0-4.6-2.1-4.6-4.6s2.1-4.6 4.6-4.6 4.6 2.1 4.6 4.6-2 4.6-4.6 4.6z"></path>
+                 </svg>
+               </button>
+               <button className="icon-button">
+                 <svg viewBox="0 0 24 24" width="24" height="24">
+                   <path fill="currentColor" d="M12 7a2 2 0 1 0-.001-4.001A2 2 0 0 0 12 7zm0 2a2 2 0 1 0-.001 3.999A2 2 0 0 0 12 9zm0 6a2 2 0 1 0-.001 3.999A2 2 0 0 0 12 15z"></path>
+                 </svg>
+               </button>
+             </>
+           )}
         </div>
       </div>
 
@@ -202,6 +261,8 @@ const ChatWindow = ({ conversation, onBackToList }) => {
                 key={message.id}
                 message={message}
                 isOwnMessage={message.sender_id === user?.id}
+                onDelete={handleDeleteMessage}
+                highlightText={searchQuery}
               />
             ))
           )}
