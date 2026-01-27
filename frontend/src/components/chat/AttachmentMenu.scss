@@ -1,0 +1,104 @@
+/**
+ * AttachmentMenu Styles
+ */
+
+.attachment-menu {
+  position: absolute;
+  bottom: 70px;
+  left: 60px;
+  width: auto;
+  background: transparent;
+  z-index: 1000;
+  animation: slideUp 0.15s ease-out;
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .attachment-options {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      position: relative;
+      
+      &:hover {
+        .option-label {
+          opacity: 1;
+          transform: translateX(0);
+        }
+        
+        .option-icon {
+          transform: scale(1.1);
+          box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+      }
+
+      .option-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        transition: all 0.2s;
+
+        &.image {
+          background: linear-gradient(to bottom right, #ac44cf, #7f66ff); // Purple gradient for photos
+        }
+
+        &.document {
+          background: linear-gradient(to bottom right, #5f66cd, #5f66cd); // Blue for documents
+        }
+      }
+
+      .option-label {
+        background: rgba(0,0,0,0.7);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 16px;
+        font-size: 13px;
+        opacity: 0;
+        transform: translateX(-10px);
+        transition: all 0.2s;
+        pointer-events: none;
+        white-space: nowrap;
+      }
+    }
+  }
+}
+
+// Mobile adjustment
+@media (max-width: 768px) {
+  .attachment-menu {
+    left: 16px; 
+    bottom: 80px;
+
+    .attachment-options li {
+      .option-label {
+        opacity: 1;
+        transform: none;
+        background: white;
+        color: #333;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+    }
+  }
+}

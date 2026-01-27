@@ -1,0 +1,17 @@
+{
+    "name": "chat-app/api",
+    "description": "Backend API for Real-time Chat Application",
+    "type": "project",
+    "require": {
+        "php": ">=8.0",
+        "pusher/pusher-php-server": "^7.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true
+    }
+}

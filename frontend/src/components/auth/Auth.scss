@@ -1,0 +1,214 @@
+/**
+ * Auth Styles - WhatsApp Style
+ */
+
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(to bottom, #00a884 0%, #00a884 130px, #d9dbd5 130px, #d9dbd5 100%);
+  padding: 20px;
+}
+
+.auth-box {
+  background: white;
+  border-radius: 3px;
+  box-shadow: 0 17px 50px 0 rgba(0, 0, 0, 0.19), 0 12px 15px 0 rgba(0, 0, 0, 0.24);
+  width: 100%;
+  max-width: 450px;
+  overflow: hidden;
+}
+
+.auth-header {
+  text-align: center;
+  padding: 40px 30px 30px;
+  background: white;
+
+  .whatsapp-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    color: #00a884;
+    
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  h1 {
+    font-size: 14px;
+    font-weight: 400;
+    color: #41525d;
+    letter-spacing: 0.5px;
+    margin: 0 0 10px;
+  }
+
+  .auth-subtitle {
+    font-size: 14px;
+    color: #667781;
+    margin: 0;
+  }
+}
+
+.auth-form {
+  padding: 0 30px 30px;
+
+  .auth-error {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff4e5;
+    border: 1px solid #ffa500;
+    padding: 12px 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+
+    span {
+      font-size: 18px;
+    }
+
+    p {
+      margin: 0;
+      font-size: 14px;
+      color: #d14900;
+    }
+  }
+
+  .form-group {
+    margin-bottom: 15px;
+
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 15px;
+      border: 1px solid #d1d7db;
+      border-radius: 3px;
+      background: #f0f2f5;
+      transition: all 0.2s;
+
+      &:focus {
+        outline: none;
+        border-color: #00a884;
+        background: white;
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      &::placeholder {
+        color: #8696a0;
+      }
+    }
+  }
+
+  .auth-button {
+    width: 100%;
+    padding: 14px;
+    background: #00a884;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover:not(:disabled) {
+      background: #008069;
+    }
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .loading-spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+  }
+
+  .auth-toggle {
+    text-align: center;
+    margin-top: 20px;
+
+    p {
+      font-size: 14px;
+      color: #667781;
+      margin: 0;
+    }
+
+    button {
+      background: none;
+      border: none;
+      color: #00a884;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-left: 5px;
+      padding: 0;
+      
+      &:hover:not(:disabled) {
+        text-decoration: underline;
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+
+.auth-footer {
+  background: #f0f2f5;
+  padding: 15px 30px;
+  text-align: center;
+  border-top: 1px solid #e9edef;
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    color: #667781;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .auth-container {
+    background: white;
+    padding: 0;
+  }
+
+  .auth-box {
+    box-shadow: none;
+    max-width: 100%;
+    border-radius: 0;
+  }
+
+  .auth-header {
+    padding: 30px 20px 20px;
+  }
+
+  .auth-form {
+    padding: 0 20px 20px;
+  }
+}
