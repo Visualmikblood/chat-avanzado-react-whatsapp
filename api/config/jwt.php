@@ -60,7 +60,7 @@ class JWT {
 
         $base64UrlHeader = self::base64UrlEncode($header);
         $base64UrlPayload = self::base64UrlEncode($payload);
-
+        
         $signature = hash_hmac('sha256', $base64UrlHeader . "." . $base64UrlPayload, self::$secret_key, true);
         $base64UrlSignature = self::base64UrlEncode($signature);
 
