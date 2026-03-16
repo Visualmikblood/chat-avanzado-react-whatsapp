@@ -10,6 +10,8 @@ require_once __DIR__ . '/../models/Message.php';
 require_once __DIR__ . '/../models/Conversation.php';
 require_once __DIR__ . '/../middleware/auth.php';
 require_once __DIR__ . '/../utils/Response.php';
+// IMPLEMENTACIÓN VERCEL: Importar adaptador de almacenamiento
+require_once __DIR__ . '/../vercel_compatibility/StorageAdapter.php';
 
 class MessageController {
     private $db;
@@ -62,30 +64,21 @@ class MessageController {
 
             if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
                 // Procesar subida de archivo
-                $uploadDir = __DIR__ . '/../uploads/';
                 
-                // Crear directorio si no existe
-                if (!file_exists($uploadDir)) {
-                    mkdir($uploadDir, 0777, true);
-                }
+                // ============================================================
+                // IMPLEMENTACIÓN VERCEL/SUPABASE: Uso de StorageAdapter
+                // Esta línea maneja automáticamente Local vs Nube
+                // ============================================================
+                $uploadedUrl = StorageAdapter::upload($_FILES['file']);
+                // ============================================================
 
-                $fileTmpPath = $_FILES['file']['tmp_name'];
-                $fileName = $_FILES['file']['name'];
-                $fileSize = $_FILES['file']['size'];
-                $fileType = $_FILES['file']['type'];
-                
-                // Generar nombre único
-                $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-                $newFileName = uniqid('msg_') . '.' . $extension;
-                $destPath = $uploadDir . $newFileName;
-
-                // Mover archivo
-                if (move_uploaded_file($fileTmpPath, $destPath)) {
-                    // La URL será relativa
-                    $content = '/uploads/' . $newFileName;
+                if ($uploadedUrl) {
+                    $content = $uploadedUrl;
                     
                     // Determinar tipo si no se especificó
                     if ($type === 'file') {
+                        $fileName = $_FILES['file']['name'];
+                        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
                         $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
                         if (in_array($extension, $imageExtensions)) {
                             $type = 'image';

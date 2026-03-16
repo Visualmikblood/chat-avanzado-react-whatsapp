@@ -1,0 +1,38 @@
+==============================================================================
+RESUMEN DE IMPLEMENTACIÓN: VERCEL + SUPABASE
+==============================================================================
+
+Este archivo documenta los cambios realizados para permitir el despliegue
+en Vercel (Backend Serverless) y Supabase (Base de datos PostgreSQL + Storage),
+manteniendo la funcionalidad original en Localhost (MySQL + Archivos Locales).
+
+1. ARCHIVOS NUEVOS:
+   - api/vercel.json: Configuración esencial para que Vercel procese PHP.
+   - database/schema_supabase.sql: Versión del esquema SQL traducido a PostgreSQL.
+   - api/vercel_compatibility/StorageAdapter.php: Clase que detecta el entorno.
+     Si es Local -> Usa move_uploaded_file() en carpeta /uploads.
+     Si es Vercel -> Usa cURL para subir a Supabase Storage Bucket.
+
+2. ARCHIVOS MODIFICADOS:
+   - api/config/database.php: Se añadió lógica para detectar la variable de entorno
+     'DB_CONNECTION'. Si es 'pgsql', usa el driver de PostgreSQL.
+   - api/controllers/MessageController.php: Se reemplazó la lógica dura de
+     subida de archivos por 'StorageAdapter::upload()'.
+
+3. REQUISITOS PARA DEPLOY (Variables de Entorno en Vercel):
+   DB_CONNECTION=pgsql
+   DB_HOST=aws-0-eu-central-1.pooler.supabase.com (ejemplo)
+   DB_NAME=postgres
+   DB_USER=postgres.xxxx
+   DB_PASS=xxxx
+   SUPABASE_URL=https://xxxx.supabase.co
+   SUPABASE_SERVICE_ROLE_KEY=xxxx (Necesario para subir archivos sin autenticación de frontend en php)
+
+4. PASOS EN SUPABASE:
+   a. Ir a SQL Editor y ejecutar el contenido de database/schema_supabase.sql
+   b. Ir a Storage, crear un bucket público llamado 'chat-files'.
+
+5. COMPATIBILIDAD LOCAL:
+   La app sigue funcionando en local porque api/config/database.php por defecto
+   usa MySQL si no encuentra configuración de Postgres, y StorageAdapter
+   por defecto usa carpetas locales si no detecta entorno Vercel.

@@ -49,7 +49,21 @@ class Database {
         $this->conn = null;
 
         try {
-            $dsn = "mysql:host={$this->host};dbname={$this->db_name};charset={$this->charset}";
+            // ============================================================
+            // IMPLEMENTACIÓN VERCEL/SUPABASE: Detección de Driver
+            // ============================================================
+            $driver = $_ENV['DB_CONNECTION'] ?? 'mysql'; // Por defecto mysql para local
+            
+            if ($driver === 'pgsql') {
+                // Configuración para PostgreSQL (Supabase)
+                // Supabase requiere SSL mode
+                $dsn = "pgsql:host={$this->host};dbname={$this->db_name};port=5432";
+                // En Postgres/Supabase el charset se maneja diferente, pero UTF8 es default
+            } else {
+                // Configuración Original (Localhost MySQL)
+                $dsn = "mysql:host={$this->host};dbname={$this->db_name};charset={$this->charset}";
+            }
+            // ============================================================
             
             $options = [
                 PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
