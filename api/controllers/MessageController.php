@@ -11,7 +11,7 @@ require_once __DIR__ . '/../models/Conversation.php';
 require_once __DIR__ . '/../middleware/auth.php';
 require_once __DIR__ . '/../utils/Response.php';
 // IMPLEMENTACIÓN VERCEL: Importar adaptador de almacenamiento
-require_once __DIR__ . '/../vercel_compatibility/StorageAdapter.php';
+require_once dirname(__DIR__) . '/vercel_compatibility/StorageAdapter.php';
 
 class MessageController {
     private $db;
@@ -31,13 +31,6 @@ class MessageController {
      * Enviar mensaje
      * POST /api/messages
      * Body: { conversation_id, content, type }
-     * Header: Authorization: Bearer <token>
-     */
-    /**
-     * Enviar mensaje (Texto o Archivo)
-     * POST /api/messages
-     * Body JSON: { conversation_id, content, type }
-     * Body Multipart: conversation_id (int), file (binary), type (optional)
      * Header: Authorization: Bearer <token>
      */
     public function send() {
