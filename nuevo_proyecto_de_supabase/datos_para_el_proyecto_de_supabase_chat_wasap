@@ -12,3 +12,8 @@ url: https://ahtcdxebdegqwxpbrjnj.supabase.co
 
 
 connection string: postgresql://postgres:U-wz@uRbq9+h&BN@db.ahtcdxebdegqwxpbrjnj.supabase.co:5432/postgres
+
+
+
+host: db.ahtcdxebdegqwxpbrjnj.supabase.co
+port: 5432
