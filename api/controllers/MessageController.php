@@ -11,7 +11,7 @@ require_once __DIR__ . '/../models/Conversation.php';
 require_once __DIR__ . '/../middleware/auth.php';
 require_once __DIR__ . '/../utils/Response.php';
 // IMPLEMENTACIÓN VERCEL: Importar adaptador de almacenamiento
-require_once dirname(__DIR__) . '/vercel_compatibility/StorageAdapter.php';
+require_once __DIR__ . '/../vercel_compatibility/StorageAdapter.php';
 
 class MessageController {
     private $db;
