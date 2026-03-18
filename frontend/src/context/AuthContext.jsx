@@ -1,4 +1,4 @@
-/**
+ /**
  * Auth Context
  * Maneja el estado de autenticación global
  */
@@ -18,31 +18,49 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Verificar si hay sesión al cargar la app
   useEffect(() => {
-    const token = localStorage.getItem('auth_token');
-    const savedUser = localStorage.getItem('user');
+    let isMounted = true;
 
-    if (token && savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    
-    setLoading(false);
+    const checkLoggedIn = async () => {
+      const token = localStorage.getItem('token');
+      
+      if (token) {
+        try {
+          // Validar token pidiendo los datos reales al servidor
+          const response = await authAPI.me();
+          if (isMounted) {
+            setUser(response.data.data);
+            setIsAuthenticated(true);
+          }
+        } catch (error) {
+          console.error('Sesión inválida o expirada');
+          // Solo borrar si es error de autenticación (401), no si se cae el server
+          if (error.response && error.response.status === 401) {
+            localStorage.removeItem('token');
+          }
+        }
+      }
+      
+      if (isMounted) setLoading(false);
+    };
+
+    checkLoggedIn();
+
+    return () => { isMounted = false; };
   }, []);
 
-  /**
-   * Registrar nuevo usuario
-   */
   const register = async (userData) => {
     try {
       const response = await authAPI.register(userData);
       const { user, token } = response.data.data;
 
-      localStorage.setItem('auth_token', token);
-      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('token', token);
       setUser(user);
+      setIsAuthenticated(true);
 
       return { success: true };
     } catch (error) {
@@ -51,17 +69,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  /**
-   * Login
-   */
   const login = async (credentials) => {
     try {
       const response = await authAPI.login(credentials);
       const { user, token } = response.data.data;
 
-      localStorage.setItem('auth_token', token);
-      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('token', token);
       setUser(user);
+      setIsAuthenticated(true);
 
       return { success: true };
     } catch (error) {
@@ -70,31 +85,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  /**
-   * Logout
-   */
   const logout = async () => {
     try {
       await authAPI.logout();
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
     } finally {
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('user');
+      localStorage.removeItem('token');
       setUser(null);
+      setIsAuthenticated(false);
     }
   };
 
-  /**
-   * Actualizar perfil del usuario
-   */
   const updateUserProfile = async (profileData) => {
     try {
       const response = await authAPI.updateProfile(profileData);
       const updatedUser = response.data.data;
       
       setUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
       
       return { success: true };
     } catch (error) {
@@ -110,7 +118,7 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     updateUserProfile,
-    isAuthenticated: !!user
+    isAuthenticated
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

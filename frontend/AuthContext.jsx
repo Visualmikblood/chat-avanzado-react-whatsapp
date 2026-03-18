@@ -18,23 +18,33 @@ export const AuthProvider = ({ children }) => {
 
   // Efecto para verificar si hay un token al cargar la app
   useEffect(() => {
+    let isMounted = true; // Flag para evitar actualizaciones en un componente desmontado
+
     const checkLoggedIn = async () => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
           // Validar token pidiendo los datos del usuario
           const response = await authAPI.me();
-          setUser(response.data.data);
-          setIsAuthenticated(true);
+          if (isMounted) {
+            setUser(response.data.data);
+            setIsAuthenticated(true);
+          }
         } catch (error) {
           console.error('Sesión inválida o expirada, limpiando token.');
           localStorage.removeItem('token');
         }
       }
-      setLoading(false);
+      if (isMounted) {
+        setLoading(false);
+      }
     };
 
     checkLoggedIn();
+
+    return () => {
+      isMounted = false; // Se ejecuta cuando el componente se desmonta
+    };
   }, []);
 
   const login = async (credentials) => {
