@@ -173,7 +173,7 @@ class AuthController {
     /**
      * Actualizar perfil del usuario
      * PUT /api/auth/profile
-     * Body: { username?, bio?, avatar_url? }
+     * Body: { username?, avatar_url? }
      * Header: Authorization: Bearer <token>
      */
     public function updateProfile() {
@@ -188,7 +188,7 @@ class AuthController {
         file_put_contents(__DIR__ . '/../../debug_profile.log', "Received data: " . json_encode($data) . "\n", FILE_APPEND);
 
         // Validar que al menos un campo esté presente
-        if (empty($data['username']) && empty($data['bio']) && empty($data['avatar_url'])) {
+        if (empty($data['username']) && empty($data['avatar_url'])) {
             Response::error('Debes proporcionar al menos un campo para actualizar', 400);
         }
 

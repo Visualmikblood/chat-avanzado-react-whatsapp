@@ -75,7 +75,7 @@ class User {
      */
     public function findById($id) {
         try {
-            $query = "SELECT id, username, email, bio, avatar_url, status, created_at, last_seen 
+            $query = "SELECT id, username, email, avatar_url, status, created_at, last_seen 
                      FROM " . $this->table . " 
                      WHERE id = :id LIMIT 1";
             
@@ -201,7 +201,7 @@ class User {
     /**
      * Actualizar perfil de usuario
      * @param int $userId
-     * @param array $data (username, bio, avatar_url)
+     * @param array $data (username, avatar_url)
      * @return bool
      */
     public function updateProfile($userId, $data) {
@@ -212,11 +212,6 @@ class User {
             if (isset($data['username'])) {
                 $fields[] = "username = :username";
                 $params[':username'] = $data['username'];
-            }
-
-            if (isset($data['bio'])) {
-                $fields[] = "bio = :bio";
-                $params[':bio'] = $data['bio'];
             }
 
             if (isset($data['avatar_url'])) {
