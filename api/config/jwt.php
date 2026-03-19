@@ -13,7 +13,8 @@ class JWT {
      */
     public static function init() {
         self::loadEnv();
-        self::$secret_key = $_ENV['JWT_SECRET'] ?? 'your-secret-key-change-this-in-production';
+        // Fallback: $_ENV (archivo .env local) → getenv() (Vercel dashboard)
+        self::$secret_key = $_ENV['JWT_SECRET'] ?? getenv('JWT_SECRET') ?: 'your-secret-key-change-this-in-production';
     }
 
     /**

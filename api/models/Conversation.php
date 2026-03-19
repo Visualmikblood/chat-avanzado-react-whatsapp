@@ -22,38 +22,39 @@ class Conversation {
     public function create($type, $participantIds, $name = null) {
         try {
             $this->conn->beginTransaction();
-            
-            // Crear la conversación
-            $query = "INSERT INTO " . $this->table . " (type, name) VALUES (:type, :name)";
+
+            // Crear la conversación — usando RETURNING id para compatibilidad con PostgreSQL
+            $query = "INSERT INTO " . $this->table . " (type, name) VALUES (:type, :name) RETURNING id";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':type', $type);
             $stmt->bindParam(':name', $name);
-            
+
             if (!$stmt->execute()) {
                 $this->conn->rollBack();
                 return false;
             }
-            
-            $conversationId = $this->conn->lastInsertId();
-            
+
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $conversationId = $row['id'];
+
             // Agregar participantes
-            $queryParticipants = "INSERT INTO conversation_participants (conversation_id, user_id) 
+            $queryParticipants = "INSERT INTO conversation_participants (conversation_id, user_id)
                                  VALUES (:conversation_id, :user_id)";
             $stmtParticipants = $this->conn->prepare($queryParticipants);
-            
+
             foreach ($participantIds as $userId) {
                 $stmtParticipants->bindParam(':conversation_id', $conversationId, PDO::PARAM_INT);
                 $stmtParticipants->bindParam(':user_id', $userId, PDO::PARAM_INT);
-                
+
                 if (!$stmtParticipants->execute()) {
                     $this->conn->rollBack();
                     return false;
                 }
             }
-            
+
             $this->conn->commit();
             return $conversationId;
-            
+
         } catch (PDOException $e) {
             $this->conn->rollBack();
             error_log("Conversation Create Error: " . $e->getMessage());
@@ -71,7 +72,7 @@ class Conversation {
             $query = "SELECT DISTINCT c.id, c.type, c.name, c.updated_at,
                      (SELECT content FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message,
                      (SELECT created_at FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message_time,
-                     (SELECT COUNT(*) FROM messages m WHERE m.conversation_id = c.id AND m.created_at > IFNULL(cp.last_read_at, '1970-01-01')) as unread_count
+                     (SELECT COUNT(*) FROM messages m WHERE m.conversation_id = c.id AND m.created_at > COALESCE(cp.last_read_at, '1970-01-01'::timestamp)) as unread_count
                      FROM conversations c
                      INNER JOIN conversation_participants cp ON c.id = cp.conversation_id
                      WHERE cp.user_id = :user_id

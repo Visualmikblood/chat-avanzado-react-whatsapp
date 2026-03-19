@@ -14,14 +14,15 @@ class Database {
     private $conn;
 
     public function __construct() {
-        // Cargar variables de entorno desde .env
+        // Cargar variables de entorno desde .env (desarrollo local)
         $this->loadEnv();
-        
-        $this->host = $_ENV['DB_HOST'] ?? 'localhost';
-        $this->db_name = $_ENV['DB_NAME'] ?? 'chat_app';
-        $this->username = $_ENV['DB_USER'] ?? 'root';
-        $this->password = $_ENV['DB_PASS'] ?? '';
-        $this->port = $_ENV['DB_PORT'] ?? '5432';
+
+        // Leer con fallback: $_ENV (archivo .env local) → getenv() (Vercel dashboard) → $_SERVER → default
+        $this->host     = $_ENV['DB_HOST']     ?? getenv('DB_HOST')     ?: 'localhost';
+        $this->db_name  = $_ENV['DB_NAME']     ?? getenv('DB_NAME')     ?: 'chat_app';
+        $this->username = $_ENV['DB_USER']     ?? getenv('DB_USER')     ?: 'root';
+        $this->password = $_ENV['DB_PASS']     ?? getenv('DB_PASS')     ?: '';
+        $this->port     = $_ENV['DB_PORT']     ?? getenv('DB_PORT')     ?: '5432';
     }
 
     /**
@@ -54,13 +55,12 @@ class Database {
             // ============================================================
             // IMPLEMENTACIÓN VERCEL/SUPABASE: Detección de Driver
             // ============================================================
-            $driver = $_ENV['DB_CONNECTION'] ?? 'mysql'; // Por defecto mysql para local
+            $driver = $_ENV['DB_CONNECTION'] ?? getenv('DB_CONNECTION') ?: 'mysql';
             
             if ($driver === 'pgsql') {
                 // Configuración para PostgreSQL (Supabase)
-                // Supabase requiere SSL mode
-                $dsn = "pgsql:host={$this->host};dbname={$this->db_name};port={$this->port}";
-                // En Postgres/Supabase el charset se maneja diferente, pero UTF8 es default
+                // Supabase requiere SSL — sslmode=require es obligatorio
+                $dsn = "pgsql:host={$this->host};dbname={$this->db_name};port={$this->port};sslmode=require";
             } else {
                 // Configuración Original (Localhost MySQL)
                 $dsn = "mysql:host={$this->host};dbname={$this->db_name};charset={$this->charset}";

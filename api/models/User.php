@@ -21,23 +21,24 @@ class User {
      */
     public function create($username, $email, $password) {
         try {
-            $query = "INSERT INTO " . $this->table . " 
-                     (username, email, password_hash) 
-                     VALUES (:username, :email, :password_hash)";
-            
+            $query = "INSERT INTO " . $this->table . "
+                     (username, email, password_hash)
+                     VALUES (:username, :email, :password_hash) RETURNING id";
+
             $stmt = $this->conn->prepare($query);
-            
+
             // Hash de la contraseña
             $password_hash = password_hash($password, PASSWORD_BCRYPT);
-            
+
             $stmt->bindParam(':username', $username);
             $stmt->bindParam(':email', $email);
             $stmt->bindParam(':password_hash', $password_hash);
-            
+
             if ($stmt->execute()) {
-                return $this->conn->lastInsertId();
+                $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                return $row['id'];
             }
-            
+
             return false;
         } catch (PDOException $e) {
             error_log("User Create Error: " . $e->getMessage());

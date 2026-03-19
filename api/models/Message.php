@@ -22,24 +22,25 @@ class Message {
      */
     public function create($conversationId, $senderId, $content, $type = 'text') {
         try {
-            $query = "INSERT INTO " . $this->table . " 
-                     (conversation_id, sender_id, content, type) 
-                     VALUES (:conversation_id, :sender_id, :content, :type)";
-            
+            $query = "INSERT INTO " . $this->table . "
+                     (conversation_id, sender_id, content, type)
+                     VALUES (:conversation_id, :sender_id, :content, :type) RETURNING id";
+
             $stmt = $this->conn->prepare($query);
-            
+
             $stmt->bindParam(':conversation_id', $conversationId, PDO::PARAM_INT);
             $stmt->bindParam(':sender_id', $senderId, PDO::PARAM_INT);
             $stmt->bindParam(':content', $content);
             $stmt->bindParam(':type', $type);
-            
+
             if ($stmt->execute()) {
-                $messageId = $this->conn->lastInsertId();
-                
+                $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                $messageId = $row['id'];
+
                 // Retornar el mensaje completo con todos los campos
                 return $this->findById($messageId);
             }
-            
+
             return false;
         } catch (PDOException $e) {
             error_log("Message Create Error: " . $e->getMessage());
@@ -133,15 +134,15 @@ class Message {
      */
     public function update($id, $userId, $newContent) {
         try {
-            $query = "UPDATE " . $this->table . " 
-                     SET content = :content, is_edited = 1 
+            $query = "UPDATE " . $this->table . "
+                     SET content = :content, is_edited = TRUE
                      WHERE id = :id AND sender_id = :user_id";
-            
+
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':content', $newContent);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
-            
+
             return $stmt->execute();
         } catch (PDOException $e) {
             error_log("Message Update Error: " . $e->getMessage());
