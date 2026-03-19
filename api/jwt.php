@@ -1,9 +1,12 @@
 <?php
 /**
- * JWT Helper Class
- * Implementación simple de JSON Web Tokens (HS256)
- * Sin dependencias externas para facilitar despliegue en Vercel
+ * JWT Helper Class (legado)
+ * NOTA: La clase JWT principal está en api/config/jwt.php
+ * Este archivo se mantiene como fallback pero NO debe usarse directamente.
+ * La guarda class_exists evita errores de redeclaración si ambos archivos se cargan.
  */
+
+if (!class_exists('JWT')) {
 
 class JWT {
     
@@ -78,3 +81,5 @@ class JWT {
         return null;
     }
 }
+
+} // end if (!class_exists('JWT'))

@@ -7,7 +7,6 @@
 class JWT {
     private static $secret_key;
     private static $encrypt = 'HS256';
-    private static $aud = null;
 
     /**
      * Inicializa la configuración JWT
@@ -15,7 +14,6 @@ class JWT {
     public static function init() {
         self::loadEnv();
         self::$secret_key = $_ENV['JWT_SECRET'] ?? 'your-secret-key-change-this-in-production';
-        self::$aud = self::getAudience();
     }
 
     /**
@@ -49,9 +47,8 @@ class JWT {
         $time = time();
         
         $token = [
-            'iat' => $time, // Issued at
-            'exp' => $time + $expiration, // Expiration
-            'aud' => self::$aud,
+            'iat'  => $time,             // Issued at
+            'exp'  => $time + $expiration, // Expiration
             'data' => $data
         ];
 
@@ -123,20 +120,8 @@ class JWT {
         return base64_decode(str_replace(['-', '_'], ['+', '/'], $text));
     }
 
-    /**
-     * Obtiene la audiencia (URL base del servidor)
-     */
-    private static function getAudience() {
-        $aud = '';
-
-        if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
-            $aud = $_SERVER['HTTP_CLIENT_IP'];
-        } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-            $aud = $_SERVER['HTTP_X_FORWARDED_FOR'];
-        } else {
-            $aud = $_SERVER['REMOTE_ADDR'];
-        }
-
-        return $aud;
-    }
 }
+// Nota: getAudience() eliminada — usar la IP del cliente como aud es
+// inestable en entornos serverless (Vercel) donde la IP puede cambiar
+// entre peticiones. El campo aud no se valida en decode(), por lo que
+// su eliminación no afecta la compatibilidad de tokens existentes.
